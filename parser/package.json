@@ -1,0 +1,13 @@
+{
+	"name": "jua-parser",
+	"version": "0.0.0",
+	"description": "Jua Parser",
+	"author": "CoderPuppy",
+
+	"dependencies": {
+		"jua-tokenizer": "^0.0.0",
+		"jua-ast": "^0.0.0",
+
+		"pull-stream": "^2.24.0"
+	}
+}

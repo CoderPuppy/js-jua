@@ -1,0 +1,11 @@
+{
+	"name": "jua-tokenizer",
+	"version": "0.0.0",
+	"description": "Jua Tokenizer",
+	"author": "CoderPuppy",
+
+	"dependencies": {
+		"pull-stream": "^2.24.0",
+		"pull-pushable": "^1.1.4"
+	}
+}

@@ -1,0 +1,11 @@
+{
+	"name": "jua",
+	"version": "0.0.0",
+	"description": "avg(lua, js)",
+	"author": "CoderPuppy",
+
+	"dependencies": {
+		"jua-parser": "^0.0.0",
+		"jua-runtime": "^0.0.0"
+	}
+}

@@ -1,0 +1,10 @@
+{
+	"name": "jua-runtime",
+	"version": "0.0.0",
+	"description": "Jua Runtime",
+	"author": "CoderPuppy",
+
+	"dependencies": {
+		"es6-map": "^0.1.0"
+	}
+}
