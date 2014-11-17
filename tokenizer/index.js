@@ -12,7 +12,7 @@ module.exports = function() {
 		[ /^if/, 'if' ],
 		[ /^for/, 'loop' ],
 		[ /^end/, 'end' ],
-		[ /^(?:local|loc)/, 'var' ],
+		[ /^(?:let)/, 'var' ],
 		[ /^return/, 'return' ],
 
 		// Literals
@@ -32,12 +32,14 @@ module.exports = function() {
 		[ /^\s+/, 'space' ],
 
 		// Operators
-		[ /^(?:==|\+|\*|\/|-|\|\||&&|\.\.)/, 'binop' ],
+		[ /^(?:==|\+|\*|\/|-|\|\||&&|\.\.|\|>|\*\*)/, 'binop' ],
 		[ /^=/, 'set' ],
 
 		[ /^\.\.\./, 'vararg' ],
+		[ /^_(\^*)(\d*)/, 'select-arg'],
 
-		[ /^[,;]/, 'seperator' ],
+		[ /^,/, 'comma' ],
+		[ /^;/, 'seperator' ],
 
 		[ /^\./, 'get' ],
 		[ /^:/, 'selfcall' ],

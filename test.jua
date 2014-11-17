@@ -1,1 +1,6 @@
-loc test = 1
+let test = 1
+let push = require('push-stream')
+let logger = require('logilus').create(console.log)
+push.values({1, 2, 3})
+	|> push.map([[_^ + _]])
+	|> push.drain(logger)

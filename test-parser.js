@@ -13,7 +13,7 @@ pull(
 		if(err) {
 			throw err
 		} else {
-			console.log(util.inspect(ast, { colors: true, depth: null }))
+			// console.log(util.inspect(ast, { colors: true, depth: null }))
 			console.log('AST: \n%s', ast.toString())
 		}
 	})

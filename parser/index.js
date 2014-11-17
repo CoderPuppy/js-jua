@@ -1,6 +1,5 @@
-var tokenizer = require('jua-tokenizer')
-var ast = require('jua-ast')
-var parser = require('./parser')
+const ast = require('jua-ast')
+const parser = require('./parser')
 
 module.exports = function(cb) {
 	var program = ast.program()
@@ -26,8 +25,15 @@ module.exports = function(cb) {
 			while(true) {
 				var tok = yield null
 				switch(tok.type) {
+				case 'dkey:close':
+					p.reparse(tok)
 				case 'eof':
 					return body
+
+				case 'comment:line':
+				case 'newline':
+				case 'seperator':
+					break
 
 				default:
 					p.reparse(tok)
@@ -47,9 +53,11 @@ module.exports = function(cb) {
 				case 'seperator':
 					break
 
+				case 'comment:line':
+				case 'comment:begin':
 				case 'eof':
 					p.reparse(tok)
-					return list
+					return list.filter(Boolean)
 
 				default:
 					p.reparse(tok)
@@ -64,46 +72,58 @@ module.exports = function(cb) {
 			if(typeof(end) != 'function') end = function(tok) { return false }
 
 			var expr
+			var length = false
+			var newline
+			var lastNewline
 
 			while(true) {
 				var tok = yield null
+				lastNewline = null
+				if(newline) lastNewline = newline
+				newline = null
 				if(end(tok)) { p.reparse(tok); return expr }
 				if(expr) {
 					switch(tok.type) {
-				case 'args:open':
-					expr = ast.call(
-						expr,
-						yield* modes.varlist(function(tok) {
-							return tok.type == 'args:close'
-						})
-					)
-					assertTokenType(yield null, 'args:close')
-					break
+					case 'args:open':
+						expr = ast.call(
+							expr,
+							yield* modes.varlist(function(tok) {
+								return tok.type == 'args:close'
+							})
+						)
+						assertTokenType(yield null, 'args:close')
+						break
 
-				case 'get':
-					expr = yield* modes.get(expr)
-					break
+					case 'get':
+						expr = yield* modes.get(expr)
+						break
 
-				case 'binop':
-					expr = ast.binop(tok.text, expr, yield* modes.expr())
-					break
+					case 'binop':
+						expr = ast.binop(tok.text, expr, yield* modes.expr())
+						break
 
-				case 'dkey:open':
-					expr = ast.get(expr, yield* modes.expr(function(tok) {
-						return tok.type == 'dkey:close'
-					}))
-					assertTokenType(yield null, 'dkey:close')
-					break
+					case 'dkey:open':
+						expr = ast.get(expr, yield* modes.expr(function(tok) {
+							return tok.type == 'dkey:close'
+						}))
+						assertTokenType(yield null, 'dkey:close')
+						break
 
-				case 'space':
-				case 'newline':
-					break
+					case 'seperator':
+						return expr
 
-				default:
-					console.warn('Unexpected %s at %s in extend mode', tok.type, tok.loc.join(':'))
-					p.reparse(tok)
-					return expr
-				}
+					case 'newline':
+						newline = tok
+					case 'space':
+						break
+
+					default:
+						console.warn('Unexpected %s at %s in modes.expr[extend]', tok.type, tok.loc.join(':'))
+						if(lastNewline)
+							p.reparse(lastNewline)
+						p.reparse(tok)
+						return expr
+					}
 				} else {
 					switch(tok.type) {
 					case 'id':
@@ -137,25 +157,41 @@ module.exports = function(cb) {
 						expr = yield* modes.variable()
 						break
 
-					case 'space':
-					case 'newline':
+					case 'function':
+					case 'dkey:open':
+						expr = yield* modes.func()
+						if(tok.type == 'dkey:open')
+							assertTokenType(yield null, 'dkey:close')
 						break
 
+					case 'select-arg':
+						expr = ast.selectArg(tok.data[0].length, parseInt(tok.data[1]) || undefined)
+						break
+
+					case 'length':
+						length = true;
+						break
+
+					case 'space':
+						break
+
+					case 'seperator':
 					case 'eof':
-						throw new SyntaxError('Unexpected eof at ' + tok.loc.join(':') + ' in modes.varlist')
+						throw new SyntaxError('Unexpected ' + tok.type + ' at ' + tok.loc.join(':') + ' in modes.varlist')
 
 					default:
-						console.warn('Unexpected %s at %s in initial mode', tok.type, tok.loc.join(':'))
+						console.warn('Unexpected %s at %s in modes.expr[initial]', tok.type, tok.loc.join(':'))
+						console.trace()
 						p.reparse(tok)
 						return expr
 					}
+					if(expr && length) expr = ast.length(expr)
 				}
 			}
 		},
 
 		variable: function*() {
 			var names = []
-			var values
 			while(true) {
 				var tok = yield null
 				switch(tok.type) {
@@ -164,15 +200,17 @@ module.exports = function(cb) {
 					break
 
 				case 'set':
-					values = yield* modes.varlist()
-					return ast.variableDeclaration(names, values)
+					return ast.variableDeclaration(names, yield* modes.varlist(function(tok) {
+						return tok.type == 'seperator' || tok.type == 'newline'
+					}))
+
+				case 'seperator':
+				case 'newline':
+					return ast.variableDeclaration(names, [])
 
 				case 'space':
-				case 'seperator':
+				case 'comma':
 					break
-
-				case 'eof':
-					throw new SyntaxError('Unexpected eof at ' + tok.loc.join(':') + ' in modes.variable')
 
 				default:
 					throw new SyntaxError('Unexpected ' + tok.type + ' at ' + tok.loc.join(':') + ' in modes.variable')
@@ -206,6 +244,7 @@ module.exports = function(cb) {
 				case 'space':
 				case 'newline':
 				case 'seperator':
+				case 'comma':
 					break
 
 				case 'set':
@@ -226,7 +265,7 @@ module.exports = function(cb) {
 				default:
 					p.reparse(tok)
 					entries.push(yield* modes.expr(function(tok) {
-						return tok.type == 'seperator'
+						return tok.type == 'seperator' || tok.type == 'comma'
 					}))
 				}
 			}
@@ -244,6 +283,27 @@ module.exports = function(cb) {
 
 				default:
 					throw new Error('Unexpected ' + tok.type + ' at ' + tok.loc.join(':') + ' in modes.kv')
+				}
+			}
+		},
+
+		func: function*() {
+			const args = []
+			const body = ast.body()
+			while(true) {
+				var tok = yield null
+				switch(tok.type) {
+				case 'space':
+					break
+
+				case 'end':
+				case 'dkey:close':
+					p.reparse(tok)
+					return ast.func(args, body)
+
+				default:
+					p.reparse(tok)
+					yield* modes.body(body)
 				}
 			}
 		}

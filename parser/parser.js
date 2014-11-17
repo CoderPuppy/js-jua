@@ -17,6 +17,7 @@ module.exports = function(gen, cb) {
 		while(queue.length > 0) {
 			try {
 				var tok = queue.shift()
+				// console.log(tok)
 				var res = gen.next(tok)
 				// console.log(tok, res)
 				if(res.done) {
@@ -49,7 +50,6 @@ module.exports = function(gen, cb) {
 		parseTokens()
 	}, function() {
 		queue.push({ type: 'eof', text: '', loc: lastLoc })
-		// queue.push({ type: 'you can\'t possibly expect this can you', text: '', loc: lastLoc })
 		parseTokens()
 		if(!done) {
 			try {
@@ -61,7 +61,7 @@ module.exports = function(gen, cb) {
 	})
 
 	p.reparse = function(tok) {
-		queue.unshift(tok)
+		queue.push(tok)
 		return p
 	}
 

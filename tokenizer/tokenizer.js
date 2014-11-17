@@ -7,6 +7,8 @@ pull.pushable = require('pull-pushable')
 
 module.exports = pull.Through(function(read, rules) {
 	var out = pull.pushable()
+	var buffer = ''
+	var loc = [1, 1]
 
 	function check(str) {
 		for(var i = 0; i < rules.length; i++) {
@@ -20,13 +22,10 @@ module.exports = pull.Through(function(read, rules) {
 		}
 	}
 
-	var buffer = ''
-	var loc = [1, 1]
-
-	function drain(doBuffer) {
+	function drain(more) {
 		while(true) {
-			var match = check(buffer)
-			if(match && (!doBuffer || match[0][0].length < buffer.length)) {
+			var match = check(buffer, !more)
+			if(match && (!more || match[0][0].length < buffer.length)) {
 				buffer = buffer.slice(match[0][0].length)
 				out.push({
 					type: match[1],
@@ -41,6 +40,8 @@ module.exports = pull.Through(function(read, rules) {
 				} else {
 					loc[1] += match[0][0].length
 				}
+			} else if(!more && buffer.length > 0) {
+				throw new SyntaxError('Unable to tokenize ' + loc.join(':'))
 			} else {
 				break
 			}

@@ -23,7 +23,9 @@ exports.body = function() {
 		parts: [],
 
 		add: function(node) {
-			this.parts.push(node)
+			if(node)
+				this.parts.push(node)
+			return this
 		},
 
 		toString: function() {
@@ -135,6 +137,34 @@ exports.binop = function(op, a, b) {
 	}
 }
 
+exports.func = function(args, body) {
+	return {
+		type: 'function',
+		args: args,
+		body: body,
+
+		toString: function() {
+			if(this.args.length == 0) {
+				return '[ ' + this.body.toString() + ' ]'
+			} else {
+				return '[ ' + this.args.join(', ') + ' => ' + ' ' + this.body.toString() + ' ]'
+			}
+		}
+	}
+}
+
+exports.selectArg = function(level, num) {
+	return {
+		type: 'select-arg',
+		level: level,
+		num: num,
+
+		toString: function() {
+			return '_' + Array(level + 1).join('^') + (num || '')
+		}
+	}
+}
+
 exports.table = function(entries) {
 	return {
 		type: 'table',
@@ -169,7 +199,7 @@ exports.variableDeclaration = function(names, values) {
 		values: values,
 
 		toString: function() {
-			return 'local ' + this.names.join(', ') + ' = ' + this.values.map(function(value) {
+			return 'let ' + this.names.join(', ') + ' = ' + this.values.map(function(value) {
 				return value.toString()
 			}).join(', ')
 		}
