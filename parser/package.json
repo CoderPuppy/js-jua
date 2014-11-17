@@ -3,6 +3,15 @@
 	"version": "0.0.0",
 	"description": "Jua Parser",
 	"author": "CoderPuppy",
+	"license": "MIT",
+	"repository": {
+		"type": "git",
+		"url": "git://github.com/CoderPuppy/js-jua.git"
+	},
+	"homepage": "http://github.com/CoderPuppy/js-jua",
+	"bugs": {
+		"url": "http://github.com/CoderPuppy/js-jua/issues"
+	},
 
 	"dependencies": {
 		"jua-ast": "^0.0.0",

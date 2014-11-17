@@ -3,6 +3,15 @@
 	"description": "Jua Compiler",
 	"version": "0.0.0",
 	"author": "CoderPuppy",
+	"license": "MIT",
+	"repository": {
+		"type": "git",
+		"url": "git://github.com/CoderPuppy/js-jua.git"
+	},
+	"homepage": "http://github.com/CoderPuppy/js-jua",
+	"bugs": {
+		"url": "http://github.com/CoderPuppy/js-jua/issues"
+	},
 
 	"dependencies": {
 		"jua-ast": "^0.0.0",
